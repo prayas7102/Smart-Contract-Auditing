@@ -33,6 +33,7 @@ describe('Attack', () => {
       await tx.wait()
 
       // Check the new owner
+      console.log("Owner of C:", await c.address)
       console.log("Owner of B:", await b.owner())
       expect(await b.owner()).to.equal(c.address)
     })
