@@ -9,7 +9,7 @@ contract TimeStamp{
     function vulnerable() external payable{
         require(msg.value == 1 ether);
         if(block.timestamp%7 ==0){
-            (bool sent, )=msg.sender.call(value:address(this).balance);
+            (bool sent, )=msg.sender.call{value: address(this).balance}("");
             require(sent, "Eth was not sent");
         }
     }
