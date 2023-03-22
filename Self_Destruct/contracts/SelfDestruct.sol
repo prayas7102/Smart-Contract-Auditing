@@ -14,8 +14,7 @@ contract NFT {
         require(msg.value == 1 ether, "Must send exactly 1 Ether!");
 
         // correction:
-        // use balance += msg.value instead of
-        // address(this).balance
+        // use balance += msg.value instead of address(this).balance
         // balance <= goal
 
         require(address(this).balance <= goal, "Minting is finished!");
@@ -37,6 +36,7 @@ contract Attack {
         address payable nftAddress = payable(address(nft));
 
         // all balance of Attack contract gets transfered to NFT contract
+        // and mint function in NFT would no longer be executed. (address(this).balance > goal) 
         selfdestruct(nftAddress);
     }
 }
