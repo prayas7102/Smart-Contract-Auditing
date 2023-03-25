@@ -4,20 +4,28 @@ pragma solidity ^0.8.0;
 // import "hardhat/console.sol";
 
 // Honeypot
+// Only Logger and Bank contract would be published on
+// etherscan to the hacker.
 
 contract Bank {
     mapping(address => uint) public balances;
     Logger logger;
 
     constructor(Logger _logger) {
+        // _logger is address at which Honeypot contract is deployed
         logger = Logger(_logger);
     }
 
     function withdraw(uint amount) public {
         require(balances[msg.sender] >= amount, "Insufficient funds");
         (bool sent, ) = msg.sender.call{value: amount}("");
+        
+        // after the reentrancy attack is finished the code below will be 
+        // executed. Without this execution transfer of baalance wont succed.
         require(sent, "Failed Transaction");
         balances[msg.sender] -= amount;
+
+        // Honeypot contract log's function is called. 
         logger.log(msg.sender, amount, "Withdraw");
     }
 
@@ -27,6 +35,7 @@ contract Bank {
     }
 }
 
+// will be deployed to etherscan to decieve the attacker
 contract Logger {
     event Log(address caller, uint amount, string action);
 
@@ -38,6 +47,8 @@ contract Logger {
 contract Honeypot {
     function log(address _caller, uint _amount, string memory _action) public pure{
         if (equal(_action, "Withdraw")) {
+            // transaction is reverted & attacker is unable to withdraw his funds
+            // attacker's address is revealed on etherscan
             revert("It's a trap");
         }
     }
@@ -58,6 +69,7 @@ contract Attack {
     }
 
     function attack() public payable {
+        // hacker trying to execute reentrancy attack
         bank.deposit{value: 1 ether}();
         bank.withdraw(1 ether);
     }
