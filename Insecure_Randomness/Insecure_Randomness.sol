@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8
+pragma solidity ^0.8;
 
 // both contracts are executed in the same block.
 // so both blockhash(block.number-1) & block.timestamp
