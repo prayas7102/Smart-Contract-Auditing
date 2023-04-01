@@ -1,7 +1,7 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
 
-describe('Attack', () => {
+describe('Delegate Call Attack', () => {
   let a, b, c
 
   beforeEach(async () => {
@@ -21,11 +21,13 @@ describe('Attack', () => {
     console.log("Attacker Address:", attacker.address)
   })
 
-  describe('the attack', () => {
+  describe('the attack\n', () => {
 
     it('changes the ownership with delegateCall() exploit', async () => {
       // Check initial owner
+      console.log("\n")
       console.log("Owner of B:", await b.owner())
+      console.log("Address of C:", c.address)
       expect(await b.owner()).to.equal(deployer.address)
 
       // Perform the attack
@@ -33,7 +35,7 @@ describe('Attack', () => {
       await tx.wait()
 
       // Check the new owner
-      console.log("Owner of C:", await c.address)
+      console.log("\n")
       console.log("Owner of B:", await b.owner())
       expect(await b.owner()).to.equal(c.address)
     })

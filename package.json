@@ -14,5 +14,8 @@
     "mocha": "^10.2.0",
     "solc": "^0.8.17",
     "truffle-hdwallet-provider": "^1.0.17"
+  },
+  "devDependencies": {
+    "hardhat": "^2.13.0"
   }
 }
