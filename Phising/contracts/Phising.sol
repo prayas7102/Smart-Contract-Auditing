@@ -33,12 +33,13 @@ contract Phisable {
     }
 
     function withdrawAll(address payable _recipient) public {
-        
+
         // if user call UnsafeOperation, tx.origin==user's account addr
         // _recipient would be attacker account
         // assume that user has interacted with this contract earlier 
         // because of which user acc. addr == owner in this contract
-        require(tx.origin == owner);
+        
+        require(tx.origin == owner); // only those who deploy this contract would be able to execute this function
         _recipient.transfer(address(this).balance);
     }
 }

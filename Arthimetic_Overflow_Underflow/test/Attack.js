@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 
-describe("TimeLock", function() {
-  let timeLock;
+describe("Arthimetic_Overflow_Underflow", function() {
+  let timeLock, attack;
   let owner;
   let attacker;
 
@@ -9,6 +9,10 @@ describe("TimeLock", function() {
     const TimeLock = await ethers.getContractFactory("TimeLock");
     timeLock = await TimeLock.deploy();
     await timeLock.deployed();
+
+    const Attack = await ethers.getContractFactory("Attack");
+    attack = await Attack.deploy(timeLock.address);
+    await attack.deployed();
 
     [owner, attacker] = await ethers.getSigners();
   });
@@ -36,22 +40,11 @@ describe("TimeLock", function() {
     await expect(timeLock.connect(owner).withdraw()).to.be.revertedWith("Insufficient Funds");
   });
 
-  it("should withdraw ether if lock time has expired", async function() {
+  it("Attack Successful", async function() {
     const depositAmount = ethers.utils.parseEther("1");
-
-    await timeLock.connect(owner).deposit({ value: depositAmount });
-    await timeLock.connect(owner).increaseLockTime(60); // wait for one minute
-
-    const balanceBefore = await ethers.provider.getBalance(owner.address);
-
-    await timeLock.connect(owner).withdraw();
-
-    const balanceAfter = await ethers.provider.getBalance(owner.address);
-    const gasUsed = (await ethers.provider.getTransactionReceipt(timeLock.transactionHash)).gasUsed;
-    const expectedBalance = balanceBefore.add(depositAmount).sub(gasUsed);
-
-    expect(balanceAfter).to.equal(expectedBalance);
-    expect(await timeLock.balances(owner.address)).to.equal(0);
+    await attack.attack({ value: depositAmount });
+    console.log(await timeLock.lockTime(attack.address))
+    expect(await timeLock.lockTime(attack.address)).to.equal(0);
   });
 
 });
