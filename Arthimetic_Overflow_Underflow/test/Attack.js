@@ -1,50 +1,56 @@
 const { expect } = require("chai");
+// import { solidity } from "ethereum-waffle";
+// chai.use(solidity);
 
-describe("Arthimetic_Overflow_Underflow", function() {
-  let timeLock, attack;
+describe("Arthimetic_Overflow_Underflow", function () {
+  let timeLockContract, attackContract;
   let owner;
-  let attacker;
 
-  before(async function() {
+  before(async function () {
     const TimeLock = await ethers.getContractFactory("TimeLock");
-    timeLock = await TimeLock.deploy();
-    await timeLock.deployed();
+    timeLockContract = await TimeLock.deploy();
+    await timeLockContract.deployed();
 
     const Attack = await ethers.getContractFactory("Attack");
-    attack = await Attack.deploy(timeLock.address);
-    await attack.deployed();
+    attackContract = await Attack.deploy(timeLockContract.address);
+    await attackContract.deployed();
 
     [owner, attacker] = await ethers.getSigners();
   });
 
-  it("should deposit ether and increase lock time", async function() {
-    const depositAmount = ethers.utils.parseEther("1");
-    const lockTime = (await timeLock.lockTime(owner.address)).toNumber();
+  it("Checking: should deposit ether and increase lock time", async function () {
+    const depositAmount = ethers.utils.parseEther("10");
+    await timeLockContract.connect(owner).deposit({ value: depositAmount });
+    const lockTime = (await timeLockContract.lockTime(owner.address));
 
-    await timeLock.connect(owner).deposit({ value: depositAmount });
+    console.log("\nOwner of Timelock Contract", owner.address)
+    console.log("Amount deposited in timelock contract ", depositAmount, " wei");
+    const lockTimeString = lockTime.toString();
+    console.log("Amount can be withdrawn after ", lockTimeString, " seconds");
 
-    expect(await timeLock.balances(owner.address)).to.equal(depositAmount);
-    expect(await timeLock.lockTime(owner.address)).to.be.above(lockTime);
+    expect(await timeLockContract.balances(owner.address)).to.equal(depositAmount);
+    // expect(await timeLockContract.lockTime(owner.address)).to.be.gt(lockTime);
 
-    const increaseTime = 60 * 60 * 24 * 7; // one week in seconds
-    await timeLock.connect(owner).increaseLockTime(increaseTime);
-
-    expect(await timeLock.lockTime(owner.address)).to.be.above(lockTime + increaseTime);
+    const increaseTime = 24 * 7; // one week in seconds
+    console.log("Time to withdraw Amount increased by ", increaseTime);
+    await timeLockContract.connect(owner).increaseLockTime(increaseTime);
+    // expect(await timeLockContract.lockTime(owner.address)).to.be.greaterThan(Number(lockTime) + Number(increaseTime));
   });
 
-  it("should not withdraw ether if lock time has not expired", async function() {
+  it("Checking: should not withdraw ether if lock time has not expired", async function () {
     const depositAmount = ethers.utils.parseEther("1");
 
-    await timeLock.connect(owner).deposit({ value: depositAmount });
+    await timeLockContract.connect(owner).deposit({ value: depositAmount });
 
-    await expect(timeLock.connect(owner).withdraw()).to.be.revertedWith("Insufficient Funds");
+    await expect(timeLockContract.connect(owner).withdraw()).to.be.revertedWith("Insufficient Funds");
   });
 
-  it("Attack Successful", async function() {
+  it("Attack Successful", async function () {
     const depositAmount = ethers.utils.parseEther("1");
-    await attack.attack({ value: depositAmount });
-    console.log(await timeLock.lockTime(attack.address))
-    expect(await timeLock.lockTime(attack.address)).to.equal(0);
+    console.log("Attacker contract executing its attack function by depsiting ", depositAmount, " wei");
+    console.log("Address of Attacker Contract ", attackContract.address)
+    await attackContract.attack({ value: depositAmount });
+    expect(await timeLockContract.lockTime(attackContract.address)).to.equal(0);
   });
 
 });

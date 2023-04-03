@@ -10,9 +10,9 @@ contract A {
     // contract C. After attack msg.sender == C's address
     function setOwner() public {
         owner = msg.sender;
-        console.log("\nDelegate call getting executed");
-        console.log("msg.sender = ", msg.sender);
-        console.log("msg.sender is = C's address");
+        // console.log("\nDelegate call getting executed");
+        // console.log("msg.sender = ", msg.sender);
+        // console.log("msg.sender is = C's address");
     }
 }
 

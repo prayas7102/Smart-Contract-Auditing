@@ -26,17 +26,20 @@ describe('Delegate Call Attack', () => {
     it('changes the ownership with delegateCall() exploit', async () => {
       // Check initial owner
       console.log("\n")
-      console.log("Owner of B:", await b.owner())
-      console.log("Address of C:", c.address)
+      console.log("Deployer deploys contract B, hence");
+      console.log("Owner of contract B:", await b.owner())
+      console.log("Address of contract C:", c.address)
       expect(await b.owner()).to.equal(deployer.address)
 
       // Perform the attack
+      console.log("\nDelegate call attack getting executed");
+      console.log("Attacker executes attack function in contract C");
       let tx = await c.connect(attacker).attack()
       await tx.wait()
 
       // Check the new owner
       console.log("\n")
-      console.log("Owner of B:", await b.owner())
+      console.log("Owner of contract B is == Contract C's address:", await b.owner())
       expect(await b.owner()).to.equal(c.address)
     })
 

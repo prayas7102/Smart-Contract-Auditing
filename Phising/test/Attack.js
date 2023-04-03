@@ -1,42 +1,58 @@
-const { expect } = require('chai');
-const { ethers } = require('hardhat');
+const { ethers } = require("hardhat");
 
-describe('Attack', () => {
-  let a, b, c
+describe("Phisable", function () {
+  let owner;
+  let attacker;
+  let phisableContract;
+  let attackContract;
 
-  beforeEach(async () => {
-    const A = await ethers.getContractFactory('A')
-    a = await A.deploy()
+  beforeEach(async function () {
+    // Deploy Phisable contract
+    const Phisable = await ethers.getContractFactory("Phisable");
+    owner = await ethers.provider.getSigner(0);
+    phisableContract = await Phisable.deploy(owner.address);
+    await phisableContract.deployed();
 
-    const B = await ethers.getContractFactory('B')
-    b = await B.deploy(a.address)
+    // Deploy Attack contract
+    const Attack = await ethers.getContractFactory("Attack");
+    attacker = await ethers.provider.getSigner(1);
+    attackContract = await Attack.deploy(phisableContract.address, attacker.address);
+    await attackContract.deployed();
+  });
 
-    const C = await ethers.getContractFactory('C')
-    c = await C.deploy(b.address)
+  it("should allow the owner to withdraw all funds", async function () {
+    const initialBalance = await ethers.provider.getBalance(phisableContract.address);
+    const amountToSend = ethers.utils.parseEther("1");
 
-    let accounts = await ethers.getSigners()
-    deployer = accounts[0]
-    attacker = accounts[1]
-    console.log("Deployer Address:", deployer.address)
-    console.log("Attacker Address:", attacker.address)
-  })
+    // Send some ether to Phisable contract
+    await owner.sendTransaction({
+      to: phisableContract.address,
+      value: amountToSend,
+    });
 
-  describe('the attack', () => {
+    // Withdraw all funds from Phisable contract
+    await phisableContract.withdrawAll(attacker.address);
 
-    it('changes the ownership with delegateCall() exploit', async () => {
-      // Check initial owner
-      console.log("Owner of B:", await b.owner())
-      expect(await b.owner()).to.equal(deployer.address)
+    // Check that the funds were transferred to the attacker's address
+    const finalBalance = await ethers.provider.getBalance(attacker.address);
+    expect(finalBalance.sub(initialBalance)).to.eq(amountToSend);
+  });
 
-      // Perform the attack
-      let tx = await c.connect(attacker).attack()
-      await tx.wait()
+  it("should not allow an attacker to withdraw all funds through UnsafeOperation", async function () {
+    const initialBalance = await ethers.provider.getBalance(phisableContract.address);
+    const amountToSend = ethers.utils.parseEther("1");
 
-      // Check the new owner
-      console.log("Owner of C:", await c.address)
-      console.log("Owner of B:", await b.owner())
-      expect(await b.owner()).to.equal(c.address)
-    })
+    // Send some ether to Phisable contract
+    await owner.sendTransaction({
+      to: phisableContract.address,
+      value: amountToSend,
+    });
 
-  })
-})
+    // Try to withdraw all funds through UnsafeOperation from Attack contract
+    await expect(attackContract.UnsafeOperation()).to.be.revertedWith("revert");
+
+    // Check that all funds are still in the Phisable contract
+    const finalBalance = await ethers.provider.getBalance(phisableContract.address);
+    expect(finalBalance).to.eq(initialBalance);
+  });
+});
