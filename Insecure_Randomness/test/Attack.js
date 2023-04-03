@@ -2,17 +2,14 @@ const { expect } = require('chai');
 const { ethers } = require('hardhat');
 
 describe('Attack', () => {
-  let a, b, c
+  let GuessRandomNumberContract, AttackContract;
 
   beforeEach(async () => {
-    const A = await ethers.getContractFactory('A')
-    a = await A.deploy()
+    const GuessRandomNumber = await ethers.getContractFactory('GuessRandomNumber')
+    GuessRandomNumberContract = await GuessRandomNumber.deploy()
 
-    const B = await ethers.getContractFactory('B')
-    b = await B.deploy(a.address)
-
-    const C = await ethers.getContractFactory('C')
-    c = await C.deploy(b.address)
+    const Attack = await ethers.getContractFactory('Attack')
+    AttackContract = await Attack.deploy()
 
     let accounts = await ethers.getSigners()
     deployer = accounts[0]
@@ -25,17 +22,9 @@ describe('Attack', () => {
 
     it('changes the ownership with delegateCall() exploit', async () => {
       // Check initial owner
-      console.log("Owner of B:", await b.owner())
-      expect(await b.owner()).to.equal(deployer.address)
-
-      // Perform the attack
-      let tx = await c.connect(attacker).attack()
-      await tx.wait()
-
-      // Check the new owner
-      console.log("Owner of C:", await c.address)
-      console.log("Owner of B:", await b.owner())
-      expect(await b.owner()).to.equal(c.address)
+      console.log("Balance of Attack contrcat before performing attack:", await AttackContract.getBalance());
+      await AttackContract.attack(GuessRandomNumberContract.address)
+      console.log("Balance of Attack contrcat before performing attack:", await AttackContract.getBalance());
     })
 
   })

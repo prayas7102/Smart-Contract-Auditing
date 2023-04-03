@@ -6,8 +6,7 @@ pragma solidity ^0.8.0;
 import "hardhat/console.sol";
 
 // correction
-// import "../utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+// import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 contract TimeLock {
     mapping(address => uint256) public balances;
