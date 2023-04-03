@@ -1,20 +1,17 @@
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.6.0) (utils/math/SafeMath.sol)
 
-pragma solidity 0.7.0;
+pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
 
-// solidity version 0.8 and above has already solved this problem
-// through internal compilation
-
 // correction
-// import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/math/SafeMath.sol";
+// import "../utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 contract TimeLock {
     mapping(address => uint256) public balances;
     mapping(address => int256) public lockTime;
-    event LogInteger(int256 val);
 
     function deposit() external payable {
         balances[msg.sender] += msg.value;
@@ -22,21 +19,21 @@ contract TimeLock {
     }
 
     function increaseLockTime(int256 _secondsToIncrease) external payable {
+        
         // incorrect/unsafe method
         // results in lockTime[msg.sender] = 0
         lockTime[msg.sender] += _secondsToIncrease;
-        emit LogInteger(lockTime[msg.sender]);
+
         // correct/safe method
         // add function throws error when it detects
         // arithmetic overflow or underflow
-        // lockTime[msg.sender]=lockTime[msg.sender].add(_secondsToIncrease)
+        // lockTime[msg.sender] = SafeMath.add(lockTime[msg.sender], _secondsToIncrease);
     }
 
     function withdraw() public {
-
         require(balances[msg.sender] > 0, "Insufficient Funds");
 
-        // block.timestamp is used to represent the current timestamp 
+        // block.timestamp is used to represent the current timestamp
         // of the block that is being mined.
         require(
             int256(block.timestamp) > lockTime[msg.sender],
