@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-// import "hardhat/console.sol";
+import "hardhat/console.sol";
 
 // Honeypot
 // Only Logger and Bank contract would be published on
@@ -19,13 +19,13 @@ contract Bank {
     function withdraw(uint amount) public {
         require(balances[msg.sender] >= amount, "Insufficient funds");
         (bool sent, ) = msg.sender.call{value: amount}("");
-        
-        // after the reentrancy attack is finished the code below will be 
-        // executed. Without this execution transfer of baalance wont succed.
         require(sent, "Failed Transaction");
+
+        // after the reentrancy attack is finished the code below will be
+        // executed. Without this execution transfer of baalance wont succed.
         balances[msg.sender] -= amount;
 
-        // Honeypot contract log's function is called. 
+        // Honeypot contract log's function is called.
         logger.log(msg.sender, amount, "Withdraw");
     }
 
@@ -45,7 +45,11 @@ contract Logger {
 }
 
 contract Honeypot {
-    function log(address _caller, uint _amount, string memory _action) public pure{
+    function log(
+        address _caller,
+        uint _amount,
+        string memory _action
+    ) public pure {
         if (equal(_action, "Withdraw")) {
             // transaction is reverted & attacker is unable to withdraw his funds
             // attacker's address is revealed on etherscan
