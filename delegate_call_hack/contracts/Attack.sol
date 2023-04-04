@@ -10,10 +10,7 @@ contract A {
     // contract C. After attack msg.sender == C's address
     function setOwner() public {
         owner = msg.sender;
-        // console.log("\nDelegate call getting executed");
-        // console.log("msg.sender = ", msg.sender);
-        // console.log("msg.sender is = C's address");
-    }
+     }
 }
 
 contract B {
@@ -39,6 +36,9 @@ contract B {
         // data sent with a transaction, including 
         // any function selector and arguments.
         address(a).delegatecall(msg.data);
+
+        // correction
+        // use call instead of delegatecall
     }
 }
 

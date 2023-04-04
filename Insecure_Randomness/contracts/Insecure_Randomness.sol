@@ -18,8 +18,6 @@ contract GuessRandomNumber {
             )
         );
         if (_guess == ans) {
-            // console.log(_guess, ans);
-            // console.log(address(this).balance);
             (bool sent, ) = msg.sender.call{value: balance}("");
             require(sent, "Failed to send ether");
         }

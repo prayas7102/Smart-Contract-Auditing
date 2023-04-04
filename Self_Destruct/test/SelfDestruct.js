@@ -14,7 +14,6 @@ describe('Self Destruct', () => {
   let deployer,
       collector1,
       collector2,
-      collector3,
       attacker
 
   beforeEach(async () => {
@@ -25,7 +24,6 @@ describe('Self Destruct', () => {
     deployer = accounts[0]
     collector1 = accounts[1]
     collector2 = accounts[2]
-    collector3 = accounts[3]
     attacker = accounts[4]
 
     const Attack = await ethers.getContractFactory('Attack')
@@ -43,13 +41,6 @@ describe('Self Destruct', () => {
       expect(await nft.ownerOf(1)).to.equal(collector1.address)
       expect(await ethers.provider.getBalance(nft.address)).to.equal(ether(1))
 
-      // Collector 2 mints a token
-      transaction = await nft.connect(collector2).mint({ value: ether(1) })
-      await transaction.wait()
-
-      expect(await nft.ownerOf(2)).to.equal(collector2.address)
-      expect(await ethers.provider.getBalance(nft.address)).to.equal(ether(2))
-
       // Attacker performs selfDestruct attack
       transaction = await attack.connect(attacker).attack({ value: ether(100) })
       await transaction.wait()
@@ -57,7 +48,7 @@ describe('Self Destruct', () => {
       expect(await ethers.provider.getBalance(nft.address)).to.equal(ether(102))
 
       // Cannot mint NFTs anymore
-      await expect(nft.connect(collector3).mint({ value: ether(1) })).to.be.reverted
+      await expect(nft.connect(collector2).mint({ value: ether(1) })).to.be.reverted
 
     })
   })
