@@ -1,31 +1,54 @@
-const { expect } = require('chai');
-const { ethers } = require('hardhat');
+const { expect } = require("chai");
+const { ethers } = require("hardhat");
 
-describe('Attack', () => {
-  let GuessRandomNumberContract, AttackContract;
+describe("GuessRandomNumber", function () {
+  it("Should send ether to the contract and win the game", async function () {
+    // Deploy GuessRandomNumber
+    const GuessRandomNumber = await ethers.getContractFactory("GuessRandomNumber");
+    const guessRandomNumber = await GuessRandomNumber.deploy();
+    await guessRandomNumber.deployed();
 
-  beforeEach(async () => {
-    const GuessRandomNumber = await ethers.getContractFactory('GuessRandomNumber')
-    GuessRandomNumberContract = await GuessRandomNumber.deploy()
+    // Deploy Attack contract
+    const Attack = await ethers.getContractFactory("Attack");
+    const attack = await Attack.deploy();
+    await attack.deployed();
 
-    const Attack = await ethers.getContractFactory('Attack')
-    AttackContract = await Attack.deploy()
+    let [deployer] = await ethers.getSigners();
+    console.log("Deployer Address:", deployer.address);
 
-    let accounts = await ethers.getSigners()
-    deployer = accounts[0]
-    attacker = accounts[1]
-    console.log("Deployer Address:", deployer.address)
-    console.log("Attacker Address:", attacker.address)
-  })
+    // Send ether to GuessRandomNumber contract from Attack contract
+    const amount = ethers.utils.parseEther("1.0");
+    await deployer.sendTransaction({
+      to: guessRandomNumber.address,
+      value: amount,
+    });
 
-  describe('the attack', () => {
+    await deployer.sendTransaction({
+      to: attack.address,
+      value: amount,
+    });
 
-    it('changes the ownership with delegateCall() exploit', async () => {
-      // Check initial owner
-      console.log("Balance of Attack contrcat before performing attack:", await AttackContract.getBalance());
-      await AttackContract.attack(GuessRandomNumberContract.address)
-      console.log("Balance of Attack contrcat before performing attack:", await AttackContract.getBalance());
-    })
+    // Check contract balance
+    const balanceBefore = await ethers.provider.getBalance(guessRandomNumber.address);
+    const attackBalanceBefore = await ethers.provider.getBalance(attack.address);
+    expect(balanceBefore).to.equal(amount);
+    console.log("Balance of GuessRandomNumber contract before attack ", ethers.utils.formatEther(balanceBefore.toString()), "ether");
+    console.log("Balance of Attack contract before attack ", ethers.utils.formatEther(attackBalanceBefore.toString()), "ether");
 
-  })
-})
+    // Guess the random number and win the game
+    console.log("\nAttack getting executed");
+    await attack.attack(guessRandomNumber.address);
+
+    // Check contract balance after winning
+    const balanceAfter = await ethers.provider.getBalance(guessRandomNumber.address);
+    expect(balanceAfter).to.equal(0);
+    console.log("Balance of GuessRandomNumber contract after attack ", ethers.utils.formatEther(balanceAfter.toString()), "ether");
+
+    // Check attacker balance after winning
+    const attackerBalance = await ethers.provider.getBalance(attack.address);
+    expect(attackerBalance).to.equal(BigInt(amount) + BigInt(attackBalanceBefore));
+    console.log("Balance of Attack contract after attack ", ethers.utils.formatEther(attackerBalance.toString()), "ether");
+
+  });
+});
+
