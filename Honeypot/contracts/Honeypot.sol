@@ -49,10 +49,11 @@ contract Honeypot {
         address _caller,
         uint _amount,
         string memory _action
-    ) public pure {
+    ) public {
         if (equal(_action, "Withdraw")) {
             // transaction is reverted & attacker is unable to withdraw his funds
             // attacker's address is revealed on etherscan
+            console.log("It's a trap");
             revert("It's a trap");
         }
     }
