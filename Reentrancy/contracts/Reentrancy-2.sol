@@ -1,18 +1,20 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-// 1. import contract
 // import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+/* Attach nonReentrant (inherit from ReentrancyGuard) to protect against reentracy */
+
+import "hardhat/console.sol";
 
 contract Vulnerable {
     mapping(address => uint) public balances;
-    // bool locked = false
+
+    bool locked = false;
 
     function deposit() public payable {
         balances[msg.sender] += msg.value;
     }
 
-    /* 3. attach nonReentrant (inherit from ReentrancyGuard) to protect against reentracy */
     function withdraw() public {
         // require(locked==false, "Locked");
         // locked= true;
@@ -22,6 +24,12 @@ contract Vulnerable {
         require(sent, "Failed Transaction");
         balances[msg.sender] = 0;
         // locked = false;
+    }
+
+    receive() external payable {}
+
+    function getBalance () public view returns(uint){
+        return address(this).balance;
     }
 
     function callerAddress()
@@ -36,7 +44,7 @@ contract Vulnerable {
 contract Attack {
     Vulnerable public vulnerable;
 
-    constructor(address vulnerableAddress) {
+    constructor(address payable vulnerableAddress) {
         vulnerable = Vulnerable(vulnerableAddress);
     }
 

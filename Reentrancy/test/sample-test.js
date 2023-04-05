@@ -1,54 +1,48 @@
+// SPDX-License-Identifier: Unlicense
 const { expect } = require("chai");
+const { ethers } = require("hardhat");
 
-describe("Vulnerable", function () {
+describe("Reentrant Contract\n", function () {
   let vulnerable;
+  let attack;
 
-  beforeEach(async function () {
+  beforeEach(async () => {
     const Vulnerable = await ethers.getContractFactory("Vulnerable");
+    const Attack = await ethers.getContractFactory("Attack");
+
     vulnerable = await Vulnerable.deploy();
     await vulnerable.deployed();
+
+    attack = await Attack.deploy(vulnerable.address);
+    await attack.deployed();
   });
 
-  it("should deposit funds", async function () {
-    const depositAmount = ethers.utils.parseEther("1");
-    const depositTx = await vulnerable.deposit({ value: depositAmount });
-    await depositTx.wait();
-    const balance = await vulnerable.balances(await ethers.getSigner(0).getAddress());
-    expect(balance).to.equal(depositAmount);
+  it("should allow users to deposit ether", async function () {
+    await vulnerable.deposit({ value: 100 });
+    expect(await vulnerable.balances(ethers.provider.getSigner(0).getAddress())).to.equal(100);
+    console.log("Contract Vulnerable: ", vulnerable.address)
+    console.log("Balance in Vulnerable Contract 100 ether")
   });
 
-  it("should withdraw funds", async function () {
-    const depositAmount = ethers.utils.parseEther("1");
-    const depositTx = await vulnerable.deposit({ value: depositAmount });
-    await depositTx.wait();
-    const withdrawTx = await vulnerable.withdraw();
-    await withdrawTx.wait();
-    const balance = await vulnerable.balances(await ethers.getSigner(0).getAddress());
-    expect(balance).to.equal(0);
+  it("should allow users to withdraw their ether", async function () {
+    await vulnerable.deposit({ value: 100 });
+    await vulnerable.withdraw();
+    expect(await vulnerable.balances(ethers.provider.getSigner(0).getAddress())).to.equal(0);
   });
 
-  it("should not allow reentrancy attacks", async function () {
-    const depositAmount = ethers.utils.parseEther("1");
-    const attacker = await ethers.getSigner(1);
-    const attackerAddress = await attacker.getAddress();
-    const Vulnerable = await ethers.getContractFactory("Vulnerable");
-    const vulnerableAttacker = await Vulnerable.connect(attacker).deploy();
-    const attack = await ethers.getContractFactory("Attack");
-    const attackContract = await attack.deploy(vulnerableAttacker.address);
+  it("should be able to steal ether from the vulnerable contract", async function () {
+    let [deployer, attacker] = await ethers.getSigners();
 
-    // The attacker deposits some funds into the vulnerable contract
-    const depositTx = await attackContract.attack({ value: depositAmount });
-    await depositTx.wait();
+    const initialBalance = await ethers.provider.getBalance(attack.address);
 
-    // The attacker tries to withdraw their funds multiple times, triggering a reentrancy attack
-    await expect(attackContract.attack()).to.be.revertedWith("reentrant call");
+    console.log("\nContract Attack: ", attack.address)
+    console.log("initialBalance of this contract: ", (initialBalance).toString())
+    console.log("Attack function getting executed:")
+    
+    await attack.connect(attacker).attack({ value: ethers.utils.parseEther("1") });
 
-    // The attacker's balance should still be zero after the failed reentrancy attack
-    const attackerBalance = await ethers.provider.getBalance(attackerAddress);
-    expect(attackerBalance).to.equal(0);
-
-    // The vulnerable contract's balance should still be equal to the deposit amount
-    const vulnerableBalance = await ethers.provider.getBalance(vulnerableAttacker.address);
-    expect(vulnerableBalance).to.equal(depositAmount);
+    const finalBalance = await ethers.provider.getBalance(attack.address);
+    console.log("\nFinalBalance of Attack contract ",ethers.utils.formatEther(finalBalance))
+    expect(finalBalance).to.be.gt(initialBalance);
   });
 });
