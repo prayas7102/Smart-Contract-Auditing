@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-// import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 /* Attach nonReentrant (inherit from ReentrancyGuard) to protect against reentracy */
 
 import "hardhat/console.sol";
@@ -16,14 +16,14 @@ contract Vulnerable {
     }
 
     function withdraw() public {
-        // require(locked==false, "Locked");
-        // locked= true;
+        require(locked==false, "Locked");
+        locked= true;
         uint bal = balances[msg.sender];
         require(bal > 0);
         (bool sent, ) = msg.sender.call{value: bal}("");
         require(sent, "Failed Transaction");
         balances[msg.sender] = 0;
-        // locked = false;
+        locked = false;
     }
 
     receive() external payable {}

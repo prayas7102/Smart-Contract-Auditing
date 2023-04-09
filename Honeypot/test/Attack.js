@@ -12,7 +12,7 @@ describe("Honeypot Contract", function () {
     // Deploy the Logger contract
     const Logger = await ethers.getContractFactory("Logger");
     logger = await Logger.deploy();
-    logger.deployed();
+    logger.deployed();     
     // Deploy the Honeypot contract
     const Honeypot = await ethers.getContractFactory("Honeypot");
     honeypot = await Honeypot.deploy();

@@ -21,7 +21,7 @@ describe("Reentrant Contract\n", function () {
     await vulnerable.deposit({ value: 100 });
     expect(await vulnerable.balances(ethers.provider.getSigner(0).getAddress())).to.equal(100);
     console.log("Contract Vulnerable: ", vulnerable.address)
-    console.log("Balance in Vulnerable Contract 100 ether")
+    console.log("Balance in Vulnerable Contract ",(await vulnerable.getBalance()))
   });
 
   it("should allow users to withdraw their ether", async function () {
@@ -42,7 +42,7 @@ describe("Reentrant Contract\n", function () {
     await attack.connect(attacker).attack({ value: ethers.utils.parseEther("1") });
 
     const finalBalance = await ethers.provider.getBalance(attack.address);
-    console.log("\nFinalBalance of Attack contract ",ethers.utils.formatEther(finalBalance))
+    console.log("\nFinalBalance of Attack contract ",(finalBalance))
     expect(finalBalance).to.be.gt(initialBalance);
   });
 });
